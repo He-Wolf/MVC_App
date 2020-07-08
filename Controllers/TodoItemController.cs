@@ -35,27 +35,42 @@ namespace mvc.Controllers
         // GET: TodoItem
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.TodoItems.Include(t => t.WebAppUser);
-            return View(await applicationDbContext.ToListAsync());
+            var CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var CurrentUser = await _userManager.Users
+                                                .Include(u => u.TodoItems)
+                                                .SingleAsync(u => u.Id == CurrentUserId);
+
+            var todoItems = CurrentUser.TodoItems.ToList();
+            if(todoItems == null)
+            {
+                return NotFound();
+            }
+
+            return View(_mapper.Map<List<TodoItem>, List<TodoViewModel>>(todoItems));
         }
 
         // GET: TodoItem/Details/5
         public async Task<IActionResult> Details(long? id)
         {
+            var CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var CurrentUser = await _userManager.Users
+                                                .Include(u => u.TodoItems)
+                                                .SingleAsync(u => u.Id == CurrentUserId);
+
             if (id == null)
             {
                 return NotFound();
             }
 
-            var todoItem = await _context.TodoItems
-                .Include(t => t.WebAppUser)
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var todoItem = CurrentUser.TodoItems.Single(t => t.Id == id);
+
             if (todoItem == null)
             {
                 return NotFound();
             }
-
-            return View(todoItem);
+            
+            return View(_mapper.Map<TodoViewModel>(todoItem));
         }
 
         // GET: TodoItem/Create
