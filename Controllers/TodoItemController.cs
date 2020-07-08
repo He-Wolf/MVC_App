@@ -2,23 +2,34 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using mvc.Data;
 using mvc.Models;
+using AutoMapper;
 
 namespace mvc.Controllers
 {
     [Authorize]
     public class TodoItemController : Controller
     {
+        private readonly UserManager<WebAppUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public TodoItemController(ApplicationDbContext context)
+        public TodoItemController(
+            UserManager<WebAppUser> userManager,
+            ApplicationDbContext context,
+            IMapper mapper)
         {
+            _userManager = userManager;
             _context = context;
+            _mapper = mapper;
         }
 
         // GET: TodoItem
@@ -50,7 +61,6 @@ namespace mvc.Controllers
         // GET: TodoItem/Create
         public IActionResult Create()
         {
-            ViewData["WebAppUserId"] = new SelectList(_context.Set<WebAppUser>(), "Id", "Id");
             return View();
         }
 
@@ -59,16 +69,22 @@ namespace mvc.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,IsComplete,WebAppUserId")] TodoItem todoItem)
+        public async Task<IActionResult> Create([Bind("Id,Name,IsComplete,WebAppUserId")] TodoViewModel todoItemVM)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(todoItem);
-                await _context.SaveChangesAsync();
+                var CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var CurrentUser = await _userManager.Users
+                                                .Include(u => u.TodoItems)
+                                                .SingleAsync(u => u.Id == CurrentUserId);
+                
+                TodoItem todoItem = _mapper.Map<TodoItem>(todoItemVM);
+
+                CurrentUser.TodoItems.Add(todoItem);
+                await _userManager.UpdateAsync(CurrentUser);
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["WebAppUserId"] = new SelectList(_context.Set<WebAppUser>(), "Id", "Id", todoItem.WebAppUserId);
-            return View(todoItem);
+            return View(todoItemVM);
         }
 
         // GET: TodoItem/Edit/5
