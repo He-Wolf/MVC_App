@@ -33,7 +33,20 @@
     </nav>
 
     <main role="main" class="flex-grow-1 flex-shrink-0 mb-auto">
+        @if(Context.Request.Path.ToString().Split("/")[1] == "Identity")
+        {
+            <div class="row mx-2 mb-2 justify-content-md-center">
+                <div class="col"></div>
+                <div class="col-md-7">
+                    @RenderBody()
+                </div>
+                <div class="col"></div>
+            </div>
+        }
+        else
+        {
             @RenderBody()
+        }
     </main>
 
     <footer class="text-light bg-secondary flex-shrink-0 mt-4">
