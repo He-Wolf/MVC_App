@@ -73,7 +73,8 @@ If any question, please do not hesitate to contact me.
 ### 6.1. Exception/error handling <a name="exception-error-handling"></a>
 This application needs to be extended with exception handling and more response values. There are some already known issues which may cause error when it is not used correctly. I only tested the app with correct input values.
 ## 7. Some further development possibilities <a name="some-further-development-possibilities"></a>
-- adding firsname and lastname to user data in UI
+- adding firsname and lastname to user data
+- customizing Identity UI
 - Facebook sign-in
 - adding roles (admin, user)
 - automated unit and integration tests
